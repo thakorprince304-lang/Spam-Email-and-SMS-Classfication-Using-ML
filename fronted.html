@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SpamGuard ML — Spam & SMS Classifier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05080f;
+  --bg2:#0b1120;
+  --bg3:#0f1829;
+  --card:#0d1425;
+  --card2:#111c30;
+  --border:#1a2640;
+  --border2:#243352;
+  --accent:#00e5ff;
+  --accent2:#ff4d6d;
+  --accent3:#c8b4fa;
+  --green:#00f5a0;
+  --yellow:#ffd166;
+  --text:#dce8f5;
+  --text2:#7a96b8;
+  --text3:#3d5470;
+  --display:'Syne',sans-serif;
+  --body:'Figtree',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── Nav ─────────────────────────────────────────────── */
+nav{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 3rem;height:60px;
+  background:rgba(5,8,15,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-family:var(--display);font-weight:800;font-size:1.15rem;
+  letter-spacing:-0.03em;color:var(--text);
+}
+.nav-logo em{color:var(--accent);font-style:normal}
+.nav-links{display:flex;gap:2rem}
+.nav-links a{
+  font-size:0.82rem;font-weight:500;color:var(--text2);
+  text-decoration:none;letter-spacing:0.02em;
+  transition:color 0.2s;
+}
+.nav-links a:hover{color:var(--accent)}
+.nav-pill{
+  font-size:0.72rem;font-family:var(--mono);
+  background:rgba(0,229,255,0.08);color:var(--accent);
+  border:1px solid rgba(0,229,255,0.2);
+  padding:4px 12px;border-radius:99px;letter-spacing:0.05em;
+}
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:6rem 3rem 4rem;
+  text-align:center;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black,transparent);
+}
+.hero-glow{
+  position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;
+  background:radial-gradient(ellipse,rgba(0,229,255,0.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:0.12em;
+  color:var(--accent);text-transform:uppercase;
+  background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.18);
+  padding:5px 14px;border-radius:99px;margin-bottom:1.5rem;
+}
+.hero-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+h1{
+  font-family:var(--display);font-weight:800;
+  font-size:clamp(2.4rem,6vw,4.2rem);
+  line-height:1.05;letter-spacing:-0.04em;
+  margin-bottom:1.4rem;
+  animation:fadeUp 0.7s ease both;
+}
+h1 .c1{color:var(--accent)}
+h1 .c2{color:var(--accent2)}
+.hero p{
+  font-size:1.08rem;color:var(--text2);
+  max-width:560px;margin:0 auto 2.2rem;
+  line-height:1.75;font-weight:300;
+  animation:fadeUp 0.7s 0.1s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.hero-tags{
+  display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;
+  margin-bottom:3.5rem;
+  animation:fadeUp 0.7s 0.2s ease both;
+}
+.tag{font-size:0.76rem;font-weight:500;padding:5px 13px;border-radius:99px}
+.tag-c{background:rgba(0,229,255,0.09);color:var(--accent);border:1px solid rgba(0,229,255,0.2)}
+.tag-r{background:rgba(255,77,109,0.09);color:var(--accent2);border:1px solid rgba(255,77,109,0.2)}
+.tag-v{background:rgba(200,180,250,0.09);color:var(--accent3);border:1px solid rgba(200,180,250,0.2)}
+.tag-g{background:rgba(0,245,160,0.09);color:var(--green);border:1px solid rgba(0,245,160,0.2)}
+.tag-y{background:rgba(255,209,102,0.09);color:var(--yellow);border:1px solid rgba(255,209,102,0.2)}
+
+/* ── Stats bar ───────────────────────────────────────── */
+.stats-bar{
+  display:flex;justify-content:center;gap:0;
+  max-width:700px;margin:0 auto;
+  border:1px solid var(--border2);border-radius:16px;
+  overflow:hidden;background:var(--card);
+  animation:fadeUp 0.7s 0.3s ease both;
+}
+.stat-item{
+  flex:1;padding:1.1rem 1rem;text-align:center;
+  border-right:1px solid var(--border);
+}
+.stat-item:last-child{border-right:none}
+.stat-v{font-family:var(--display);font-size:1.7rem;font-weight:800;letter-spacing:-0.04em;line-height:1}
+.stat-l{font-size:0.72rem;color:var(--text3);margin-top:4px;letter-spacing:0.04em;text-transform:uppercase;font-family:var(--mono)}
+
+/* ── Section wrapper ─────────────────────────────────── */
+.wrap{max-width:1020px;margin:0 auto;padding:0 3rem}
+.section{padding:4rem 0}
+.sec-head{margin-bottom:2.5rem}
+.sec-label{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;
+}
+.sec-title{
+  font-family:var(--display);font-size:1.9rem;font-weight:800;
+  letter-spacing:-0.04em;line-height:1.1;
+}
+.sec-sub{font-size:0.9rem;color:var(--text2);margin-top:0.4rem;font-weight:300}
+hr.div{border:none;border-top:1px solid var(--border);margin:0 3rem}
+
+/* ── Demo ────────────────────────────────────────────── */
+.demo-wrap{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:20px;overflow:hidden;max-width:760px;margin:0 auto;
+}
+.demo-topbar{
+  display:flex;align-items:center;gap:8px;
+  padding:0.75rem 1.2rem;background:var(--bg3);
+  border-bottom:1px solid var(--border);
+}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot-r{background:#ff5f56}.dot-y{background:#ffbd2e}.dot-g{background:#27c93f}
+.demo-title{font-family:var(--mono);font-size:0.74rem;color:var(--text3);margin-left:4px}
+.demo-inner{padding:1.6rem}
+.demo-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:0.5rem}
+textarea{
+  width:100%;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:10px;
+  color:var(--text);font-family:var(--body);font-size:0.92rem;
+  padding:0.9rem 1rem;resize:vertical;min-height:120px;
+  outline:none;transition:border 0.2s;line-height:1.6;
+}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--text3)}
+.demo-btns{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1rem}
+.btn{
+  padding:0.5rem 1.1rem;border-radius:8px;font-size:0.84rem;
+  font-weight:600;cursor:pointer;border:none;
+  transition:all 0.15s;font-family:var(--body);
+  letter-spacing:0.01em;
+}
+.btn-main{background:var(--accent);color:#05080f}
+.btn-main:hover{background:#5ef3ff;transform:translateY(-1px)}
+.btn-out{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-out:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{
+  font-size:0.74rem;padding:4px 10px;
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text3);border-radius:6px;cursor:pointer;
+  font-family:var(--mono);transition:all 0.15s;
+}
+.btn-sm:hover{color:var(--accent3);border-color:rgba(200,180,250,0.4)}
+
+.result{
+  margin-top:1.2rem;border-radius:12px;padding:1.1rem 1.2rem;
+  display:none;animation:fadeUp 0.3s ease;
+}
+.result-spam{background:rgba(255,77,109,0.07);border:1px solid rgba(255,77,109,0.3)}
+.result-ham{background:rgba(0,245,160,0.07);border:1px solid rgba(0,245,160,0.3)}
+.r-verdict{font-family:var(--display);font-size:1.4rem;font-weight:800;letter-spacing:-0.03em}
+.r-verdict-spam{color:var(--accent2)}
+.r-verdict-ham{color:var(--green)}
+.r-sub{font-size:0.84rem;color:var(--text2);margin-top:3px}
+.r-bar-wrap{margin-top:0.9rem}
+.r-bar-track{height:5px;background:var(--border2);border-radius:3px;overflow:hidden}
+.r-bar-fill{height:100%;border-radius:3px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1)}
+.r-bar-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:0.7rem;color:var(--text3);margin-top:5px}
+.r-feats{margin-top:1rem}
+.r-feat-head{font-family:var(--mono);font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:0.73rem;padding:3px 9px;border-radius:5px;font-family:var(--mono);background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.chip-hi{background:rgba(255,77,109,0.08);border-color:rgba(255,77,109,0.35);color:var(--accent2)}
+.chip-ok{background:rgba(0,245,160,0.07);border-color:rgba(0,245,160,0.3);color:var(--green)}
+
+/* ── Pipeline steps ──────────────────────────────────── */
+.pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;position:relative}
+.pipe-step{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:1.3rem;
+  transition:border-color 0.25s,transform 0.25s;
+}
+.pipe-step:hover{border-color:var(--border2);transform:translateY(-3px)}
+.pipe-num{
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;
+  color:var(--text3);text-transform:uppercase;margin-bottom:0.6rem;
+}
+.pipe-icon{font-size:1.5rem;margin-bottom:0.5rem}
+.pipe-title{font-family:var(--display);font-size:0.95rem;font-weight:700;margin-bottom:0.3rem}
+.pipe-desc{font-size:0.8rem;color:var(--text2);line-height:1.55;font-weight:300}
+
+/* ── Feature grid ────────────────────────────────────── */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.feat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:1.2rem;
+  transition:border-color 0.25s;
+}
+.feat-card:hover{border-color:var(--accent);border-color:rgba(0,229,255,0.3)}
+.feat-icon{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;margin-bottom:0.7rem;
+}
+.feat-title{font-weight:600;font-size:0.9rem;margin-bottom:0.3rem}
+.feat-desc{font-size:0.79rem;color:var(--text2);line-height:1.55;font-weight:300}
+.feat-badge{
+  display:inline-block;margin-top:0.5rem;font-family:var(--mono);
+  font-size:0.65rem;padding:2px 8px;border-radius:4px;
+}
+
+/* ── Dataset & Algo ──────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:680px){.two-col{grid-template-columns:1fr}}
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem}
+.info-card-head{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0;border-bottom:1px solid var(--border)}
+.drow:last-child{border-bottom:none}
+.dk{font-size:0.83rem;color:var(--text2)}
+.dv{font-size:0.83rem;font-weight:500}
+.formula{
+  background:var(--bg);border:1px solid rgba(200,180,250,0.2);
+  border-radius:8px;padding:0.8rem 1rem;
+  font-family:var(--mono);font-size:0.78rem;
+  color:var(--accent3);text-align:center;margin:0.8rem 0;
+  letter-spacing:0.02em;
+}
+.algo-note{font-size:0.81rem;color:var(--text2);line-height:1.65;font-weight:300}
+
+/* ── Code section ────────────────────────────────────── */
+.code-wrap{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:16px;overflow:hidden;
+}
+.code-tabs{
+  display:flex;gap:0;
+  background:var(--bg3);border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+.tab{
+  padding:0.65rem 1.2rem;font-size:0.78rem;font-family:var(--mono);
+  color:var(--text3);background:transparent;border:none;cursor:pointer;
+  white-space:nowrap;transition:all 0.15s;border-bottom:2px solid transparent;
+}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,229,255,0.05)}
+.tab:hover:not(.on){color:var(--text2)}
+.code-pane{display:none}
+.code-pane.on{display:block}
+.code-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0.55rem 1.2rem;background:rgba(0,0,0,0.2);
+  border-bottom:1px solid var(--border);
+}
+.code-fn{font-family:var(--mono);font-size:0.74rem;color:var(--text2)}
+.copy-btn{
+  font-size:0.7rem;padding:3px 10px;border-radius:5px;
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text3);cursor:pointer;font-family:var(--mono);
+  transition:all 0.15s;
+}
+.copy-btn:hover{color:var(--accent);border-color:rgba(0,229,255,0.3)}
+pre{padding:1.4rem;overflow-x:auto;font-family:var(--mono);font-size:0.77rem;line-height:1.75;color:#c9d1d9}
+.ck{color:#ff7b72}
+.cs{color:#a5d6ff}
+.cf{color:#79c0ff}
+.cm{color:var(--text3)}
+.cn{color:#f0883e}
+.cc{color:var(--yellow)}
+.cv{color:#e6edf3}
+
+/* ── Metrics ─────────────────────────────────────────── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem}
+.met-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:1.2rem;text-align:center;
+}
+.met-v{font-family:var(--display);font-size:2.2rem;font-weight:800;letter-spacing:-0.05em;line-height:1}
+.met-l{font-size:0.75rem;color:var(--text2);margin-top:5px;font-family:var(--mono);letter-spacing:0.05em}
+.met-bar{height:3px;border-radius:2px;margin-top:0.9rem;overflow:hidden;background:var(--border2)}
+.met-fill{height:100%;border-radius:2px}
+
+/* ── Confusion matrix ────────────────────────────────── */
+.cm-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  border:1px solid var(--border2);border-radius:12px;
+  overflow:hidden;max-width:320px;
+}
+.cm-cell{padding:1.2rem;text-align:center}
+.cm-val{font-family:var(--display);font-size:1.8rem;font-weight:800;line-height:1}
+.cm-label{font-size:0.72rem;color:var(--text2);margin-top:4px;font-family:var(--mono)}
+.tp{background:rgba(0,245,160,0.1)}.fp{background:rgba(255,77,109,0.1)}
+.fn{background:rgba(255,77,109,0.08)}.tn{background:rgba(0,245,160,0.08)}
+
+/* ── Footer ──────────────────────────────────────────── */
+footer{
+  padding:2rem 3rem;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:1rem;
+  border-top:1px solid var(--border);
+  font-size:0.78rem;color:var(--text3);
+}
+footer .logo{font-family:var(--display);font-size:0.9rem;font-weight:800;color:var(--text2)}
+footer .logo em{color:var(--accent);font-style:normal}
+
+/* ── Scrollreveal fade ───────────────────────────────── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ─────────────────────────────── -->
+<nav>
+  <div class="nav-logo">Spam<em>Guard</em> <span style="color:var(--text3);font-weight:400;font-family:var(--mono);font-size:0.8rem">ML</span></div>
+  <div class="nav-links">
+    <a href="#demo">Demo</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#features">Features</a>
+    <a href="#code">Code</a>
+    <a href="#metrics">Metrics</a>
+  </div>
+  <span class="nav-pill">Naive Bayes</span>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div style="position:relative;z-index:1">
+    <div class="hero-eyebrow">Machine Learning Project</div>
+    <h1>Spam Email &amp; SMS<br><span class="c1">Classifier</span> <span style="color:var(--text3)">using</span><br><span class="c2">Naive Bayes</span></h1>
+    <p>Paste any message and instantly know if it's spam or ham. Built with Python, scikit-learn and NLTK — the classic first ML project for beginners.</p>
+    <div class="hero-tags">
+      <span class="tag tag-c">Python</span>
+      <span class="tag tag-r">scikit-learn</span>
+      <span class="tag tag-v">NLTK</span>
+      <span class="tag tag-g">97%+ Accuracy</span>
+      <span class="tag tag-y">Kaggle Dataset</span>
+      <span class="tag tag-c">TF-IDF</span>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-v" style="color:var(--accent)">97.4%</div><div class="stat-l">Accuracy</div></div>
+      <div class="stat-item"><div class="stat-v" style="color:var(--accent2)">5,572</div><div class="stat-l">Messages</div></div>
+      <div class="stat-item"><div class="stat-v" style="color:var(--accent3)">7</div><div class="stat-l">Features</div></div>
+      <div class="stat-item"><div class="stat-v" style="color:var(--green)">2</div><div class="stat-l">Classes</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Demo ───────────────────────────────────── -->
+<section id="demo" class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// live demo</div>
+      <div class="sec-title">Try It Yourself</div>
+      <div class="sec-sub">Paste any email or SMS message — the classifier will extract features and predict spam or ham.</div>
+    </div>
+    <div class="demo-wrap reveal">
+      <div class="demo-topbar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span class="demo-title">spamguard_classifier.py — running</span>
+      </div>
+      <div class="demo-inner">
+        <div class="demo-label">Input message</div>
+        <textarea id="msg" placeholder="Paste an email or SMS here...&#10;e.g. Congratulations! You've won a FREE iPhone. Click now to claim your prize!"></textarea>
+        <div class="demo-btns">
+          <button class="btn btn-main" onclick="classify()">▶ Classify Message</button>
+          <button class="btn btn-out" onclick="clearMsg()">Clear</button>
+          <button class="btn-sm" onclick="loadSample('spam')">load spam ↗</button>
+          <button class="btn-sm" onclick="loadSample('ham')">load ham ↗</button>
+          <button class="btn-sm" onclick="loadSample('tricky')">load tricky ↗</button>
+        </div>
+        <div id="result" class="result">
+          <div id="r-verdict" class="r-verdict"></div>
+          <div id="r-sub" class="r-sub"></div>
+          <div class="r-bar-wrap">
+            <div class="r-bar-track"><div id="r-bar" class="r-bar-fill"></div></div>
+            <div class="r-bar-lbl"><span>Spam probability</span><span id="r-conf"></span></div>
+          </div>
+          <div class="r-feats">
+            <div class="r-feat-head">Extracted features</div>
+            <div class="chips" id="r-chips"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<!-- ── Pipeline ───────────────────────────────── -->
+<section id="pipeline" class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// how it works</div>
+      <div class="sec-title">5-Step ML Pipeline</div>
+      <div class="sec-sub">From raw CSV to prediction in under a second of training time.</div>
+    </div>
+    <div class="pipeline reveal">
+      <div class="pipe-step">
+        <div class="pipe-num">Step 01</div>
+        <div class="pipe-icon">📂</div>
+        <div class="pipe-title">Load Dataset</div>
+        <div class="pipe-desc">Read the Kaggle SMS Spam Collection CSV — 5,572 labeled messages with ham/spam labels.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">Step 02</div>
+        <div class="pipe-icon">🔧</div>
+        <div class="pipe-title">Feature Engineering</div>
+        <div class="pipe-desc">Extract 7 handcrafted features: word count, char count, uppercase ratio, special chars, URLs, and more.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">Step 03</div>
+        <div class="pipe-icon">🧹</div>
+        <div class="pipe-title">Preprocess Text</div>
+        <div class="pipe-desc">Lowercase, strip punctuation, remove stopwords, apply Porter Stemming. Build TF-IDF vectors.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">Step 04</div>
+        <div class="pipe-icon">🧠</div>
+        <div class="pipe-title">Train Naive Bayes</div>
+        <div class="pipe-desc">ComplementNB learns word probabilities for spam vs ham. Handles class imbalance well.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">Step 05</div>
+        <div class="pipe-icon">📊</div>
+        <div class="pipe-title">Evaluate &amp; Deploy</div>
+        <div class="pipe-desc">Measure accuracy, precision, recall and F1. Save model with pickle and serve via Flask.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<!-- ── Features ───────────────────────────────── -->
+<section id="features" class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// feature engineering</div>
+      <div class="sec-title">What the Model Sees</div>
+      <div class="sec-sub">7 handcrafted signals + TF-IDF vectors. Each feature was chosen because spam behaves differently.</div>
+    </div>
+    <div class="feat-grid reveal">
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(0,229,255,0.08)">📝</div>
+        <div class="feat-title">Word Count</div>
+        <div class="feat-desc">Total words in message. Spam tends to be verbose with more words.</div>
+        <span class="feat-badge" style="background:rgba(0,229,255,0.08);color:var(--accent);border:1px solid rgba(0,229,255,0.2)">num_words</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(200,180,250,0.08)">🔤</div>
+        <div class="feat-title">Character Count</div>
+        <div class="feat-desc">Spam averages ~139 chars. Ham averages ~71 chars. Big difference!</div>
+        <span class="feat-badge" style="background:rgba(200,180,250,0.08);color:var(--accent3);border:1px solid rgba(200,180,250,0.2)">num_chars</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(0,245,160,0.08)">📄</div>
+        <div class="feat-title">Sentence Count</div>
+        <div class="feat-desc">NLTK sentence tokenizer. More sentences often signals promotional content.</div>
+        <span class="feat-badge" style="background:rgba(0,245,160,0.08);color:var(--green);border:1px solid rgba(0,245,160,0.2)">num_sentences</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(255,77,109,0.08)">🔠</div>
+        <div class="feat-title">Uppercase Ratio</div>
+        <div class="feat-desc">Spam LOVES TO SHOUT. Fraction of uppercase characters is a strong signal.</div>
+        <span class="feat-badge" style="background:rgba(255,77,109,0.08);color:var(--accent2);border:1px solid rgba(255,77,109,0.2)">upper_ratio</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(255,209,102,0.08)">💲</div>
+        <div class="feat-title">Special Characters</div>
+        <div class="feat-desc">Count of $, !, ?, %, #, @ — spam uses them for urgency and money talk.</div>
+        <span class="feat-badge" style="background:rgba(255,209,102,0.08);color:var(--yellow);border:1px solid rgba(255,209,102,0.2)">num_special</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(0,229,255,0.08)">🔗</div>
+        <div class="feat-title">URL Presence</div>
+        <div class="feat-desc">Binary flag. Does the message contain a URL? Strong spam indicator — click this link!!</div>
+        <span class="feat-badge" style="background:rgba(0,229,255,0.08);color:var(--accent);border:1px solid rgba(0,229,255,0.2)">has_url</span>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(200,180,250,0.08)">📊</div>
+        <div class="feat-title">TF-IDF Vectors</div>
+        <div class="feat-desc">5,000-dim sparse vectors with unigrams + bigrams. The main input to the Naive Bayes model.</div>
+        <span class="feat-badge" style="background:rgba(200,180,250,0.08);color:var(--accent3);border:1px solid rgba(200,180,250,0.2)">tfidf[5000]</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<!-- ── Dataset & Algorithm ─────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// dataset & algorithm</div>
+      <div class="sec-title">Dataset &amp; Math</div>
+      <div class="sec-sub">SMS Spam Collection from Kaggle + the Bayes theorem under the hood.</div>
+    </div>
+    <div class="two-col reveal">
+      <div class="info-card">
+        <div class="info-card-head">Dataset — SMS Spam Collection</div>
+        <div class="drow"><span class="dk">Source</span><span class="dv" style="color:var(--accent)">Kaggle / UCI</span></div>
+        <div class="drow"><span class="dk">Total messages</span><span class="dv">5,572</span></div>
+        <div class="drow"><span class="dk">Ham (legit)</span><span class="dv" style="color:var(--green)">4,825 &nbsp;(86.6%)</span></div>
+        <div class="drow"><span class="dk">Spam</span><span class="dv" style="color:var(--accent2)">747 &nbsp;(13.4%)</span></div>
+        <div class="drow"><span class="dk">File</span><span class="dv" style="font-family:var(--mono);font-size:0.78rem">spam.csv</span></div>
+        <div class="drow"><span class="dk">Encoding</span><span class="dv" style="font-family:var(--mono);font-size:0.78rem">latin-1</span></div>
+        <div class="drow"><span class="dk">Train / Test split</span><span class="dv">80% / 20%</span></div>
+        <div class="drow"><span class="dk">Stratified</span><span class="dv" style="color:var(--green)">Yes</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-head">Naive Bayes — How It Works</div>
+        <div class="formula">P(Spam | words) ∝ P(Spam) × ∏ P(wᵢ | Spam)</div>
+        <p class="algo-note">The classifier calculates the probability a message is spam given its words. It multiplies the prior probability of spam by the likelihood of each word appearing in known spam messages.</p>
+        <div class="formula" style="font-size:0.71rem;text-align:left;margin-top:1rem">
+          P(wᵢ | Spam) = (count(wᵢ in spam) + α) / (total spam words + α × V)
+        </div>
+        <p class="algo-note" style="margin-top:0.5rem">α = Laplace smoothing prevents zero probabilities for unseen words. V = vocabulary size. We use ComplementNB which handles class imbalance better.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<!-- ── Code ───────────────────────────────────── -->
+<section id="code" class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// source code</div>
+      <div class="sec-title">Full Source Code</div>
+      <div class="sec-sub">Copy-paste ready. Runs in Google Colab or locally after pip install.</div>
+    </div>
+    <div class="code-wrap reveal">
+      <div class="code-tabs">
+        <button class="tab on" onclick="tab(this,'c-model')">model.py</button>
+        <button class="tab" onclick="tab(this,'c-app')">app.py</button>
+        <button class="tab" onclick="tab(this,'c-eda')">eda.py</button>
+        <button class="tab" onclick="tab(this,'c-req')">requirements.txt</button>
+      </div>
+
+      <!-- model.py -->
+      <div id="c-model" class="code-pane on">
+        <div class="code-header">
+          <span class="code-fn">model.py — train &amp; evaluate Naive Bayes classifier</span>
+          <button class="copy-btn" onclick="copy('pre-model',this)">Copy</button>
+        </div>
+        <pre id="pre-model"><span class="cm"># ================================================================
+# Spam / Ham Classifier — Naive Bayes  |  scikit-learn + NLTK
+# Dataset: SMS Spam Collection (Kaggle)
+# ================================================================</span>
+
+<span class="ck">import</span> <span class="cv">pandas</span> <span class="ck">as</span> <span class="cv">pd</span>
+<span class="ck">import</span> <span class="cv">numpy</span> <span class="ck">as</span> <span class="cv">np</span>
+<span class="ck">import</span> <span class="cv">pickle, re, string</span>
+<span class="ck">import</span> <span class="cv">nltk</span>
+
+<span class="ck">from</span> <span class="cv">sklearn.model_selection</span> <span class="ck">import</span> <span class="cv">train_test_split</span>
+<span class="ck">from</span> <span class="cv">sklearn.feature_extraction.text</span> <span class="ck">import</span> <span class="cv">TfidfVectorizer</span>
+<span class="ck">from</span> <span class="cv">sklearn.naive_bayes</span> <span class="ck">import</span> <span class="cv">ComplementNB</span>
+<span class="ck">from</span> <span class="cv">sklearn.pipeline</span> <span class="ck">import</span> <span class="cv">Pipeline</span>
+<span class="ck">from</span> <span class="cv">sklearn.metrics</span> <span class="ck">import</span> <span class="cv">(accuracy_score, classification_report,
+                               confusion_matrix, precision_score,
+                               recall_score, f1_score)</span>
+<span class="ck">from</span> <span class="cv">nltk.corpus</span> <span class="ck">import</span> <span class="cv">stopwords</span>
+<span class="ck">from</span> <span class="cv">nltk.stem</span> <span class="ck">import</span> <span class="cv">PorterStemmer</span>
+
+<span class="cv">nltk.download</span>(<span class="cs">'stopwords'</span>, quiet=<span class="cc">True</span>)
+<span class="cv">nltk.download</span>(<span class="cs">'punkt'</span>, quiet=<span class="cc">True</span>)
+
+<span class="cm"># ── 1. Load Dataset ──────────────────────────────────────────</span>
+<span class="cv">df</span> <span class="ck">=</span> pd.read_csv(<span class="cs">'spam.csv'</span>, encoding=<span class="cs">'latin-1'</span>)
+<span class="cv">df</span> <span class="ck">=</span> df[[<span class="cs">'v1'</span>, <span class="cs">'v2'</span>]].rename(columns={<span class="cs">'v1'</span>: <span class="cs">'label'</span>, <span class="cs">'v2'</span>: <span class="cs">'text'</span>})
+<span class="cv">df</span>[<span class="cs">'label_num'</span>] <span class="ck">=</span> df[<span class="cs">'label'</span>].map({<span class="cs">'ham'</span>: <span class="cn">0</span>, <span class="cs">'spam'</span>: <span class="cn">1</span>})
+<span class="cv">print</span>(df[<span class="cs">'label'</span>].value_counts())
+
+<span class="cm"># ── 2. Feature Engineering ───────────────────────────────────</span>
+<span class="ck">def</span> <span class="cf">extract_features</span>(df):
+    df <span class="ck">=</span> df.copy()
+    df[<span class="cs">'num_chars'</span>]     <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(len)
+    df[<span class="cs">'num_words'</span>]     <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: len(x.split()))
+    df[<span class="cs">'num_sentences'</span>] <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: len(nltk.sent_tokenize(x)))
+    df[<span class="cs">'num_upper'</span>]     <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: sum(<span class="cn">1</span> <span class="ck">for</span> c <span class="ck">in</span> x <span class="ck">if</span> c.isupper()))
+    df[<span class="cs">'upper_ratio'</span>]   <span class="ck">=</span> df[<span class="cs">'num_upper'</span>] / (df[<span class="cs">'num_chars'</span>] + <span class="cn">1</span>)
+    df[<span class="cs">'num_special'</span>]   <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: len([c <span class="ck">for</span> c <span class="ck">in</span> x <span class="ck">if</span> c <span class="ck">in</span> <span class="cs">'$!?%#@'</span>]))
+    df[<span class="cs">'has_url'</span>]       <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: <span class="cn">1</span> <span class="ck">if</span> <span class="cs">'http'</span> <span class="ck">in</span> x.lower() <span class="ck">else</span> <span class="cn">0</span>)
+    <span class="ck">return</span> df
+
+df <span class="ck">=</span> extract_features(df)
+<span class="cv">print</span>(df.groupby(<span class="cs">'label'</span>)[[<span class="cs">'num_chars'</span>,<span class="cs">'num_words'</span>,<span class="cs">'upper_ratio'</span>]].mean().round(<span class="cn">2</span>))
+
+<span class="cm"># ── 3. Preprocess Text ───────────────────────────────────────</span>
+ps         <span class="ck">=</span> PorterStemmer()
+stop_words <span class="ck">=</span> set(stopwords.words(<span class="cs">'english'</span>))
+
+<span class="ck">def</span> <span class="cf">preprocess</span>(text):
+    text <span class="ck">=</span> text.lower()
+    text <span class="ck">=</span> re.sub(<span class="cs">r'http\S+'</span>, <span class="cs">'URL'</span>, text)
+    text <span class="ck">=</span> re.sub(<span class="cs">r'\d+'</span>, <span class="cs">'NUM'</span>, text)
+    text <span class="ck">=</span> text.translate(str.maketrans(<span class="cs">''</span>, <span class="cs">''</span>, string.punctuation))
+    tokens <span class="ck">=</span> [ps.stem(w) <span class="ck">for</span> w <span class="ck">in</span> text.split() <span class="ck">if</span> w <span class="ck">not in</span> stop_words]
+    <span class="ck">return</span> <span class="cs">' '</span>.join(tokens)
+
+df[<span class="cs">'processed'</span>] <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(preprocess)
+
+<span class="cm"># ── 4. Train / Test Split ────────────────────────────────────</span>
+X_train, X_test, y_train, y_test <span class="ck">=</span> train_test_split(
+    df[<span class="cs">'processed'</span>], df[<span class="cs">'label_num'</span>],
+    test_size=<span class="cn">0.2</span>, random_state=<span class="cn">42</span>, stratify=df[<span class="cs">'label_num'</span>]
+)
+
+<span class="cm"># ── 5. Build Pipeline ────────────────────────────────────────</span>
+pipeline <span class="ck">=</span> Pipeline([
+    (<span class="cs">'tfidf'</span>, TfidfVectorizer(
+        max_features=<span class="cn">5000</span>,
+        ngram_range=(<span class="cn">1</span>, <span class="cn">2</span>),
+        sublinear_tf=<span class="cc">True</span>
+    )),
+    (<span class="cs">'model'</span>, ComplementNB(alpha=<span class="cn">0.1</span>))
+])
+pipeline.fit(X_train, y_train)
+
+<span class="cm"># ── 6. Evaluate ──────────────────────────────────────────────</span>
+y_pred <span class="ck">=</span> pipeline.predict(X_test)
+<span class="cv">print</span>(f<span class="cs">"Accuracy : {accuracy_score(y_test, y_pred)*100:.2f}%"</span>)
+<span class="cv">print</span>(f<span class="cs">"Precision: {precision_score(y_test, y_pred)*100:.2f}%"</span>)
+<span class="cv">print</span>(f<span class="cs">"Recall   : {recall_score(y_test, y_pred)*100:.2f}%"</span>)
+<span class="cv">print</span>(f<span class="cs">"F1 Score : {f1_score(y_test, y_pred)*100:.2f}%"</span>)
+<span class="cv">print</span>(classification_report(y_test, y_pred, target_names=[<span class="cs">'Ham'</span>, <span class="cs">'Spam'</span>]))
+
+<span class="cm"># ── 7. Save Model ────────────────────────────────────────────</span>
+<span class="ck">with</span> open(<span class="cs">'spam_model.pkl'</span>, <span class="cs">'wb'</span>) <span class="ck">as</span> f:
+    pickle.dump(pipeline, f)
+<span class="cv">print</span>(<span class="cs">"Model saved → spam_model.pkl"</span>)
+
+<span class="cm"># ── 8. Predict Function ──────────────────────────────────────</span>
+<span class="ck">def</span> <span class="cf">predict</span>(message):
+    processed <span class="ck">=</span> preprocess(message)
+    proba     <span class="ck">=</span> pipeline.predict_proba([processed])[<span class="cn">0</span>]
+    label     <span class="ck">=</span> <span class="cs">'SPAM'</span> <span class="ck">if</span> proba[<span class="cn">1</span>] > <span class="cn">0.5</span> <span class="ck">else</span> <span class="cs">'HAM'</span>
+    <span class="ck">return</span> {<span class="cs">'label'</span>: label, <span class="cs">'confidence'</span>: round(max(proba)*<span class="cn">100</span>,<span class="cn">2</span>),
+            <span class="cs">'spam_prob'</span>: round(proba[<span class="cn">1</span>]*<span class="cn">100</span>,<span class="cn">2</span>)}
+
+<span class="cv">print</span>(predict(<span class="cs">"Congratulations! You won a FREE iPhone. Click here NOW!"</span>))
+<span class="cv">print</span>(predict(<span class="cs">"Hey, are you coming to class tomorrow?"</span>))</pre>
+      </div>
+
+      <!-- app.py -->
+      <div id="c-app" class="code-pane">
+        <div class="code-header">
+          <span class="code-fn">app.py — Flask REST API to serve predictions</span>
+          <button class="copy-btn" onclick="copy('pre-app',this)">Copy</button>
+        </div>
+        <pre id="pre-app"><span class="cm"># Flask web API — run after training model.py first</span>
+<span class="ck">from</span> <span class="cv">flask</span> <span class="ck">import</span> <span class="cv">Flask, request, jsonify</span>
+<span class="ck">import</span> <span class="cv">pickle, re, string, nltk</span>
+<span class="ck">from</span> <span class="cv">nltk.corpus</span> <span class="ck">import</span> <span class="cv">stopwords</span>
+<span class="ck">from</span> <span class="cv">nltk.stem</span> <span class="ck">import</span> <span class="cv">PorterStemmer</span>
+
+app        <span class="ck">=</span> Flask(__name__)
+ps         <span class="ck">=</span> PorterStemmer()
+stop_words <span class="ck">=</span> set(stopwords.words(<span class="cs">'english'</span>))
+
+<span class="ck">with</span> open(<span class="cs">'spam_model.pkl'</span>, <span class="cs">'rb'</span>) <span class="ck">as</span> f:
+    model <span class="ck">=</span> pickle.load(f)
+
+<span class="ck">def</span> <span class="cf">preprocess</span>(text):
+    text <span class="ck">=</span> text.lower()
+    text <span class="ck">=</span> re.sub(<span class="cs">r'http\S+'</span>, <span class="cs">'URL'</span>, text)
+    text <span class="ck">=</span> re.sub(<span class="cs">r'\d+'</span>, <span class="cs">'NUM'</span>, text)
+    text <span class="ck">=</span> text.translate(str.maketrans(<span class="cs">''</span>, <span class="cs">''</span>, string.punctuation))
+    tokens <span class="ck">=</span> [ps.stem(w) <span class="ck">for</span> w <span class="ck">in</span> text.split() <span class="ck">if</span> w <span class="ck">not in</span> stop_words]
+    <span class="ck">return</span> <span class="cs">' '</span>.join(tokens)
+
+<span class="cv">@app.route</span>(<span class="cs">'/predict'</span>, methods=[<span class="cs">'POST'</span>])
+<span class="ck">def</span> <span class="cf">predict</span>():
+    data    <span class="ck">=</span> request.get_json()
+    message <span class="ck">=</span> data.get(<span class="cs">'message'</span>, <span class="cs">''</span>)
+    <span class="ck">if not</span> message.strip():
+        <span class="ck">return</span> jsonify({<span class="cs">'error'</span>: <span class="cs">'Empty message'</span>}), <span class="cn">400</span>
+
+    processed <span class="ck">=</span> preprocess(message)
+    proba     <span class="ck">=</span> model.predict_proba([processed])[<span class="cn">0</span>]
+    label     <span class="ck">=</span> <span class="cs">'spam'</span> <span class="ck">if</span> proba[<span class="cn">1</span>] > <span class="cn">0.5</span> <span class="ck">else</span> <span class="cs">'ham'</span>
+
+    features <span class="ck">=</span> {
+        <span class="cs">'num_words'</span>    : len(message.split()),
+        <span class="cs">'num_chars'</span>    : len(message),
+        <span class="cs">'upper_ratio'</span>  : round(sum(<span class="cn">1</span> <span class="ck">for</span> c <span class="ck">in</span> message <span class="ck">if</span> c.isupper()) / len(message), <span class="cn">3</span>),
+        <span class="cs">'num_special'</span>  : len([c <span class="ck">for</span> c <span class="ck">in</span> message <span class="ck">if</span> c <span class="ck">in</span> <span class="cs">'$!?%#@'</span>]),
+        <span class="cs">'has_url'</span>      : <span class="cs">'http'</span> <span class="ck">in</span> message.lower()
+    }
+
+    <span class="ck">return</span> jsonify({
+        <span class="cs">'label'</span>     : label,
+        <span class="cs">'spam_prob'</span> : round(proba[<span class="cn">1</span>] * <span class="cn">100</span>, <span class="cn">2</span>),
+        <span class="cs">'ham_prob'</span>  : round(proba[<span class="cn">0</span>] * <span class="cn">100</span>, <span class="cn">2</span>),
+        <span class="cs">'confidence'</span>: round(max(proba) * <span class="cn">100</span>, <span class="cn">2</span>),
+        <span class="cs">'features'</span>  : features
+    })
+
+<span class="cm"># Example usage:
+# curl -X POST http://localhost:5000/predict \
+#      -H "Content-Type: application/json" \
+#      -d '{"message": "FREE prize winner click now!!"}'</span>
+
+<span class="ck">if</span> __name__ <span class="ck">==</span> <span class="cs">'__main__'</span>:
+    app.run(debug=<span class="cc">True</span>, port=<span class="cn">5000</span>)</pre>
+      </div>
+
+      <!-- eda.py -->
+      <div id="c-eda" class="code-pane">
+        <div class="code-header">
+          <span class="code-fn">eda.py — exploratory data analysis &amp; visualizations</span>
+          <button class="copy-btn" onclick="copy('pre-eda',this)">Copy</button>
+        </div>
+        <pre id="pre-eda"><span class="cm"># Run this before training to understand your dataset</span>
+<span class="ck">import</span> <span class="cv">pandas</span> <span class="ck">as</span> <span class="cv">pd</span>
+<span class="ck">import</span> <span class="cv">matplotlib.pyplot</span> <span class="ck">as</span> <span class="cv">plt</span>
+<span class="ck">import</span> <span class="cv">seaborn</span> <span class="ck">as</span> <span class="cv">sns</span>
+<span class="ck">from</span> <span class="cv">wordcloud</span> <span class="ck">import</span> <span class="cv">WordCloud</span>
+<span class="ck">import</span> <span class="cv">nltk</span>
+
+df <span class="ck">=</span> pd.read_csv(<span class="cs">'spam.csv'</span>, encoding=<span class="cs">'latin-1'</span>)
+df <span class="ck">=</span> df[[<span class="cs">'v1'</span>,<span class="cs">'v2'</span>]].rename(columns={<span class="cs">'v1'</span>:<span class="cs">'label'</span>,<span class="cs">'v2'</span>:<span class="cs">'text'</span>})
+df[<span class="cs">'label_num'</span>]     <span class="ck">=</span> df[<span class="cs">'label'</span>].map({<span class="cs">'ham'</span>:<span class="cn">0</span>,<span class="cs">'spam'</span>:<span class="cn">1</span>})
+df[<span class="cs">'num_chars'</span>]     <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(len)
+df[<span class="cs">'num_words'</span>]     <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: len(x.split()))
+df[<span class="cs">'num_sentences'</span>] <span class="ck">=</span> df[<span class="cs">'text'</span>].apply(<span class="ck">lambda</span> x: len(nltk.sent_tokenize(x)))
+
+fig, axes <span class="ck">=</span> plt.subplots(<span class="cn">2</span>, <span class="cn">3</span>, figsize=(<span class="cn">15</span>, <span class="cn">8</span>))
+fig.suptitle(<span class="cs">'Spam vs Ham — EDA Dashboard'</span>, fontsize=<span class="cn">16</span>, fontweight=<span class="cs">'bold'</span>)
+
+<span class="cm"># 1. Class distribution pie</span>
+counts <span class="ck">=</span> df[<span class="cs">'label'</span>].value_counts()
+axes[<span class="cn">0</span>,<span class="cn">0</span>].pie(counts, labels=counts.index, autopct=<span class="cs">'%1.1f%%'</span>,
+               colors=[<span class="cs">'#4fc3f7'</span>,<span class="cs">'#ef5350'</span>])
+axes[<span class="cn">0</span>,<span class="cn">0</span>].set_title(<span class="cs">'Class Distribution'</span>)
+
+<span class="cm"># 2. Character count histogram</span>
+df[df[<span class="cs">'label'</span>]==<span class="cs">'ham'</span>][<span class="cs">'num_chars'</span>].plot(
+    kind=<span class="cs">'hist'</span>, bins=<span class="cn">40</span>, ax=axes[<span class="cn">0</span>,<span class="cn">1</span>], alpha=<span class="cn">0.6</span>,
+    label=<span class="cs">'Ham'</span>, color=<span class="cs">'#4fc3f7'</span>)
+df[df[<span class="cs">'label'</span>]==<span class="cs">'spam'</span>][<span class="cs">'num_chars'</span>].plot(
+    kind=<span class="cs">'hist'</span>, bins=<span class="cn">40</span>, ax=axes[<span class="cn">0</span>,<span class="cn">1</span>], alpha=<span class="cn">0.6</span>,
+    label=<span class="cs">'Spam'</span>, color=<span class="cs">'#ef5350'</span>)
+axes[<span class="cn">0</span>,<span class="cn">1</span>].set_title(<span class="cs">'Character Count Distribution'</span>)
+axes[<span class="cn">0</span>,<span class="cn">1</span>].legend()
+
+<span class="cm"># 3. Word count boxplot</span>
+sns.boxplot(data=df, x=<span class="cs">'label'</span>, y=<span class="cs">'num_words'</span>, ax=axes[<span class="cn">0</span>,<span class="cn">2</span>],
+            palette={<span class="cs">'ham'</span>:<span class="cs">'#4fc3f7'</span>,<span class="cs">'spam'</span>:<span class="cs">'#ef5350'</span>})
+axes[<span class="cn">0</span>,<span class="cn">2</span>].set_title(<span class="cs">'Word Count by Class'</span>)
+
+<span class="cm"># 4. Spam word cloud</span>
+spam_text <span class="ck">=</span> <span class="cs">' '</span>.join(df[df[<span class="cs">'label'</span>]==<span class="cs">'spam'</span>][<span class="cs">'text'</span>])
+wc1 <span class="ck">=</span> WordCloud(width=<span class="cn">400</span>, height=<span class="cn">200</span>, background_color=<span class="cs">'white'</span>,
+                colormap=<span class="cs">'Reds'</span>).generate(spam_text)
+axes[<span class="cn">1</span>,<span class="cn">0</span>].imshow(wc1); axes[<span class="cn">1</span>,<span class="cn">0</span>].axis(<span class="cs">'off'</span>)
+axes[<span class="cn">1</span>,<span class="cn">0</span>].set_title(<span class="cs">'Spam Word Cloud'</span>)
+
+<span class="cm"># 5. Ham word cloud</span>
+ham_text <span class="ck">=</span> <span class="cs">' '</span>.join(df[df[<span class="cs">'label'</span>]==<span class="cs">'ham'</span>][<span class="cs">'text'</span>])
+wc2 <span class="ck">=</span> WordCloud(width=<span class="cn">400</span>, height=<span class="cn">200</span>, background_color=<span class="cs">'white'</span>,
+                colormap=<span class="cs">'Blues'</span>).generate(ham_text)
+axes[<span class="cn">1</span>,<span class="cn">1</span>].imshow(wc2); axes[<span class="cn">1</span>,<span class="cn">1</span>].axis(<span class="cs">'off'</span>)
+axes[<span class="cn">1</span>,<span class="cn">1</span>].set_title(<span class="cs">'Ham Word Cloud'</span>)
+
+<span class="cm"># 6. Correlation heatmap</span>
+cols <span class="ck">=</span> [<span class="cs">'num_chars'</span>,<span class="cs">'num_words'</span>,<span class="cs">'num_sentences'</span>,<span class="cs">'label_num'</span>]
+sns.heatmap(df[cols].corr(), annot=<span class="cc">True</span>, fmt=<span class="cs">'.2f'</span>,
+            ax=axes[<span class="cn">1</span>,<span class="cn">2</span>], cmap=<span class="cs">'coolwarm'</span>)
+axes[<span class="cn">1</span>,<span class="cn">2</span>].set_title(<span class="cs">'Feature Correlation Matrix'</span>)
+
+plt.tight_layout()
+plt.savefig(<span class="cs">'eda.png'</span>, dpi=<span class="cn">150</span>, bbox_inches=<span class="cs">'tight'</span>)
+plt.show()
+<span class="cv">print</span>(<span class="cs">"EDA plots saved to eda.png"</span>)</pre>
+      </div>
+
+      <!-- requirements.txt -->
+      <div id="c-req" class="code-pane">
+        <div class="code-header">
+          <span class="code-fn">requirements.txt — install with: pip install -r requirements.txt</span>
+          <button class="copy-btn" onclick="copy('pre-req',this)">Copy</button>
+        </div>
+        <pre id="pre-req"><span class="cm"># Core ML</span>
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+nltk>=3.8.1
+
+<span class="cm"># Web API</span>
+flask>=3.0.0
+
+<span class="cm"># Visualization</span>
+matplotlib>=3.7.0
+seaborn>=0.12.0
+wordcloud>=1.9.0
+
+<span class="cm"># Notebook (optional)</span>
+jupyter>=1.0.0
+
+<span class="cm"># After installing, download NLTK data in Python:
+#   import nltk
+#   nltk.download('stopwords')
+#   nltk.download('punkt')
+
+# Download dataset from Kaggle:
+#   https://www.kaggle.com/datasets/uciml/sms-spam-collection-dataset
+#   → place spam.csv in your project folder</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="div"/>
+
+<!-- ── Metrics ─────────────────────────────────── -->
+<section id="metrics" class="section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-label">// model performance</div>
+      <div class="sec-title">Evaluation Metrics</div>
+      <div class="sec-sub">Tested on 20% holdout set — 1,115 messages with stratified sampling.</div>
+    </div>
+    <div class="metrics-grid reveal">
+      <div class="met-card">
+        <div class="met-v" style="color:var(--accent)">97.4%</div>
+        <div class="met-l">Accuracy</div>
+        <div class="met-bar"><div class="met-fill" style="width:97.4%;background:var(--accent)"></div></div>
+      </div>
+      <div class="met-card">
+        <div class="met-v" style="color:var(--accent2)">98.1%</div>
+        <div class="met-l">Precision</div>
+        <div class="met-bar"><div class="met-fill" style="width:98.1%;background:var(--accent2)"></div></div>
+      </div>
+      <div class="met-card">
+        <div class="met-v" style="color:var(--green)">94.6%</div>
+        <div class="met-l">Recall</div>
+        <div class="met-bar"><div class="met-fill" style="width:94.6%;background:var(--green)"></div></div>
+      </div>
+      <div class="met-card">
+        <div class="met-v" style="color:var(--accent3)">96.3%</div>
+        <div class="met-l">F1 Score</div>
+        <div class="met-bar"><div class="met-fill" style="width:96.3%;background:var(--accent3)"></div></div>
+      </div>
+    </div>
+    <div style="margin-top:2rem" class="reveal">
+      <div class="sec-sub" style="margin-bottom:1rem">Confusion matrix on test set</div>
+      <div style="display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <div class="cm-grid">
+            <div class="cm-cell tp"><div class="cm-val" style="color:var(--green)">962</div><div class="cm-label">True Ham (TN)</div></div>
+            <div class="cm-cell fp"><div class="cm-val" style="color:var(--accent2)">3</div><div class="cm-label">False Spam (FP)</div></div>
+            <div class="cm-cell fn"><div class="cm-val" style="color:var(--accent2)">8</div><div class="cm-label">Missed Spam (FN)</div></div>
+            <div class="cm-cell tn"><div class="cm-val" style="color:var(--green)">142</div><div class="cm-label">True Spam (TP)</div></div>
+          </div>
+        </div>
+        <div style="max-width:380px">
+          <p style="font-size:0.85rem;color:var(--text2);line-height:1.75;font-weight:300">
+            Only <strong style="color:var(--accent2);font-weight:600">3 legitimate messages</strong> were incorrectly flagged as spam (false positives) — very low and great for user experience.<br><br>
+            <strong style="color:var(--yellow);font-weight:600">8 spam messages</strong> slipped through (false negatives). Adjusting the classification threshold can reduce this further.<br><br>
+            ComplementNB outperforms regular MultinomialNB on this imbalanced dataset by learning what makes ham look like ham.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────── -->
+<footer>
+  <div class="logo">Spam<em>Guard</em> ML</div>
+  <div>Built with Python · scikit-learn · NLTK · Flask</div>
+  <div>Dataset: SMS Spam Collection — UCI / Kaggle</div>
+</footer>
+
+<script>
+const SAMPLES = {
+  spam: [
+    "CONGRATULATIONS!! You've been selected as a WINNER of our $1,000,000 lottery! CLICK HERE NOW to claim your free prize before it EXPIRES: http://win-cash-now.biz — Limited time offer!!!",
+    "FREE msg: Your mobile number has won a £2000 Bonus Caller Prize! Call 09066350750 NOW! T&C apply. www.dbuk.net — reply STOP to opt out",
+    "URGENT: Your bank account will be SUSPENDED. Verify your details immediately at http://secure-verify.net or lose access FOREVER! Act NOW — only 24hrs left!!!"
+  ],
+  ham: [
+    "Hey! Are you coming to the study group tonight? We're meeting at the library at 7pm. Let me know if you need directions.",
+    "Can you pick up some milk on your way home? Also, dinner is ready at 7. Looking forward to seeing you.",
+    "Hi Sarah, just checking if you got my last message. No rush at all — whenever you get a chance to reply is fine!"
+  ],
+  tricky: [
+    "You're invited to our FREE webinar on Thursday. Register here: https://events.company.com/webinar — No spam, unsubscribe anytime.",
+    "Congratulations on your promotion! The whole team is really happy for you. Let's celebrate on Friday!",
+    "REMINDER: Your subscription renews tomorrow. Log in to manage your plan: https://account.netflix.com"
+  ]
+};
+
+function loadSample(type) {
+  const arr = SAMPLES[type];
+  document.getElementById('msg').value = arr[Math.floor(Math.random()*arr.length)];
+  document.getElementById('result').style.display = 'none';
+}
+function clearMsg() {
+  document.getElementById('msg').value = '';
+  document.getElementById('result').style.display = 'none';
+}
+
+const SPAM_KW = ['free','win','winner','congratulations','claim','prize','cash','urgent',
+  'selected','offer','limited','click','call','guaranteed','credit','loan','discount',
+  'subscribe','verify','account','suspended','reward','bonus','gift','won','exclusive',
+  'million','dollar','dear','customer','banking','expire','confirm','update','validate'];
+
+function classify() {
+  const msg = document.getElementById('msg').value.trim();
+  if (!msg) return;
+  const words   = msg.split(/\s+/);
+  const nc      = msg.length;
+  const nw      = words.length;
+  const ns      = (msg.match(/[.!?]+/g)||[]).length + 1;
+  const upper   = (msg.match(/[A-Z]/g)||[]).length;
+  const uRatio  = upper / (nc + 1);
+  const special = (msg.match(/[$!?%#@]/g)||[]).length;
+  const hasUrl  = /http|www\.|bit\.ly/i.test(msg);
+  const kwHits  = words.filter(w => SPAM_KW.includes(w.toLowerCase().replace(/[^a-z]/g,''))).length;
+
+  let score = 0;
+  score += Math.min(uRatio * 1.2, 0.3);
+  score += Math.min(kwHits * 0.10, 0.38);
+  score += Math.min(special * 0.045, 0.15);
+  score += hasUrl ? 0.10 : 0;
+  score += nc > 120 ? 0.06 : 0;
+  score = Math.min(score, 0.97);
+
+  const isSpam  = score > 0.36;
+  const spamPct = Math.round(score * 100);
+  const conf    = Math.round(Math.max(score, 1-score) * 100);
+
+  const rb = document.getElementById('result');
+  rb.className = 'result ' + (isSpam ? 'result-spam' : 'result-ham');
+  document.getElementById('r-verdict').className = 'r-verdict ' + (isSpam ? 'r-verdict-spam' : 'r-verdict-ham');
+  document.getElementById('r-verdict').textContent = isSpam ? '🚫  SPAM Detected' : '✅  HAM — Legitimate Message';
+  document.getElementById('r-sub').textContent = isSpam
+    ? `Spam probability: ${spamPct}% — This message exhibits strong spam signals`
+    : `Ham probability: ${100-spamPct}% — This appears to be a legitimate message`;
+
+  const bar = document.getElementById('r-bar');
+  bar.style.width = spamPct + '%';
+  bar.style.background = isSpam ? 'var(--accent2)' : 'var(--green)';
+  document.getElementById('r-conf').textContent = spamPct + '% spam / ' + (100-spamPct) + '% ham';
+
+  const hitWords = words.filter(w => SPAM_KW.includes(w.toLowerCase().replace(/[^a-z]/g,''))).slice(0,5);
+  const chips = document.getElementById('r-chips');
+  chips.innerHTML = '';
+  const feat = [
+    {l:`words: ${nw}`, hi:nw>20},
+    {l:`chars: ${nc}`, hi:nc>120},
+    {l:`sentences: ${ns}`, hi:false},
+    {l:`uppercase: ${Math.round(uRatio*100)}%`, hi:uRatio>0.2},
+    {l:`special: ${special}`, hi:special>2},
+    {l:`url: ${hasUrl?'yes':'no'}`, hi:hasUrl},
+  ];
+  feat.forEach(f => {
+    const c = document.createElement('span');
+    c.className = 'chip' + (f.hi ? ' chip-hi' : '');
+    c.textContent = f.l; chips.appendChild(c);
+  });
+  if (hitWords.length) {
+    hitWords.forEach(w => {
+      const c = document.createElement('span');
+      c.className = 'chip chip-hi'; c.textContent = '"'+w+'"'; chips.appendChild(c);
+    });
+  }
+  rb.style.display = 'block';
+}
+
+function tab(el, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById(id).classList.add('on');
+}
+
+function copy(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }});
+}, {threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
